@@ -74,11 +74,18 @@ class Scrabble {
 				}
 			}
 		});
+
+		$('#reset').click((e) => {
+			this.emptyRack();
+			this.fillRack();
+		});
 	}
+
+	
+
 
 	///////////////////UNFINISHED WORK ON IT
 	fillRack(none) {
-
 		const alphabet = "abcdefghijklmnopqrstuvwxyz_";
 		let randomCharacter;
 
@@ -98,6 +105,10 @@ class Scrabble {
 			}	
 		}
 	};
+
+	emptyRack() {
+		$('img').remove();
+	}
 
 	///////////////////UNFINISHED UNTESTED WOORK ONNIT
 	updateScore() {
@@ -219,7 +230,12 @@ class Square {
 		this.id = id;
 		this.isOccupied = false;
 		this.multiplier = mult;
+		this.content = null;	// IMPLEMENT HOLDER FOR TILE
 	}
+}
+
+class Tile {
+
 }
 
 class Rack {
