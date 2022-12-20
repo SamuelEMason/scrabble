@@ -17,72 +17,11 @@ class Scrabble {
 
 		this.fillRack();
 
-		let tiles = document.querySelectorAll('.draggable');
-		
-		tiles.forEach((target) => {
-			// in the case of a drop over non-droppable elements
-			let parent = target.parentElement;
-
-			target.onmousedown = (e) => {
-
-				let shiftX = e.clientX - target.getBoundingClientRect().left;
-				let shiftY = e.clientY - target.getBoundingClientRect().top;
-				target.style.position = 'absolute';
-				target.style.zIndex = 1000;
-
-				document.body.append(target);
-				
-				function moveAt(pageX, pageY) {
-					target.style.left = pageX - shiftX + 'px';
-					target.style.top = pageY - shiftY + 'px';
-				}
-				moveAt(e.pageX, e.pageY);
-
-				function onMouseMove(e) {
-					moveAt(e.pageX, e.pageY);
-
-					target.hidden = true;
-					let elemBelow = document.elementFromPoint(e.clientX, e.clientY);
-					target.hidden = false;
-
-					target.onmouseup = () => {
-						let droppableTarget = false;
-						elemBelow.classList.forEach((className) => {
-							if (className == 'droppable') {
-								droppableTarget = true;
-							}
-						});
-
-						target.getAttribute('style');
-						target.removeAttribute('style');
-
-						if (droppableTarget) {
-							$(elemBelow)[0].appendChild(target);
-						}
-						else {
-							parent.appendChild(target);
-						}
-
-						document.removeEventListener('mousemove', onMouseMove);
-						target.onmouseup = null;
-					}
-				}
-				document.addEventListener('mousemove', onMouseMove);
-
-				target.ondragstart = () => {
-					return false;
-				}
-			}
-		});
-
 		$('#reset').click((e) => {
 			this.emptyRack();
 			this.fillRack();
 		});
 	}
-
-	
-
 
 	///////////////////UNFINISHED WORK ON IT
 	fillRack(none) {
@@ -91,6 +30,7 @@ class Scrabble {
 
 		for (let num = 0; num < RACK_SIZE; num++) {
 
+			let targetSpace = $(`#space${num}`);
 			if (!this.rack.tiles[num].isOccupied) {
 
 				// Select random letter
@@ -99,15 +39,79 @@ class Scrabble {
 				} while (this.state.tileData[randomCharacter].quantity <= 0);
 				
 				// Create new tile
-				let targetSpace = $(`#space${num}`);
+				this.rack.tiles[num].isOccupied = true;
 				let url = this.state.tileData[randomCharacter].url;
 				targetSpace.append(`<img class="tile draggable" src="${url}"></img>`);
 			}	
+			let target = targetSpace[0].children[0];
+			this.draggifyTile(target);
+			
 		}
 	};
 
 	emptyRack() {
+		for (let num = 0; num < RACK_SIZE; num++) {
+			this.rack.tiles[num].isOccupied = false;
+		}
 		$('img').remove();
+		this.fillRack();
+	}
+
+	draggifyTile(target) {
+
+		// in the case of a drop over non-droppable elements
+		let parent = target.parentElement;
+
+		target.onmousedown = (e) => {
+
+			let shiftX = e.clientX - target.getBoundingClientRect().left;
+			let shiftY = e.clientY - target.getBoundingClientRect().top;
+			target.style.position = 'absolute';
+			target.style.zIndex = 1000;
+
+			document.body.append(target);
+			
+			function moveAt(pageX, pageY) {
+				target.style.left = pageX - shiftX + 'px';
+				target.style.top = pageY - shiftY + 'px';
+			}
+			moveAt(e.pageX, e.pageY);
+
+			function onMouseMove(e) {
+				moveAt(e.pageX, e.pageY);
+
+				target.hidden = true;
+				let elemBelow = document.elementFromPoint(e.clientX, e.clientY);
+				target.hidden = false;
+
+				target.onmouseup = () => {
+					let droppableTarget = false;
+					elemBelow.classList.forEach((className) => {
+						if (className == 'droppable') {
+							droppableTarget = true;
+						}
+					});
+
+					target.getAttribute('style');
+					target.removeAttribute('style');
+
+					if (droppableTarget) {
+						$(elemBelow)[0].appendChild(target);
+					}
+					else {
+						parent.appendChild(target);
+					}
+
+					document.removeEventListener('mousemove', onMouseMove);
+					target.onmouseup = null;
+				}
+			}
+			document.addEventListener('mousemove', onMouseMove);
+
+			target.ondragstart = () => {
+				return false;
+			}
+		}
 	}
 
 	///////////////////UNFINISHED UNTESTED WOORK ONNIT
@@ -303,6 +307,8 @@ function main() {
 	// Create new Scrabble object
 	let game = new Scrabble();
 	// game.displayGameState('board');
+
+	console.log(game.rack.tiles[0].isOccupied);
 	
 }
 
