@@ -1,3 +1,6 @@
+// Samuel Mason
+// Samuel_Mason@student.uml.edu
+
 var BOARD_LENGTH = 15;
 var RACK_SIZE = 7;
 var NUM_MULTIPLIERS = 4;
@@ -12,8 +15,6 @@ class Scrabble {
 		this.initialize();
 	};
 
-	// FIX WHERE THERE IS A TILE IN A SQUARE AND 
-	// ANOTHER TILE IS PLACED IN THE OCCUPIED SQUARE
 	initialize() {
 
 		this.fillRack();
@@ -30,17 +31,22 @@ class Scrabble {
 		// });
 	}
 
-	///////////////////UNFINISHED WORK ON IT
+	// Fill the Rack with the proper amount of tiles
 	fillRack(none) {
+
+		// Set of legal letters
 		const alphabet = "abcdefghijklmnopqrstuvwxyz_";
 		let randomCharacter;
 
 		for (let num = 0; num < RACK_SIZE; num++) {
 
+			// Select space in rack
 			let targetSpace = $(`#space${num}`);
+
+			// Skip if space is occupied
 			if (!this.rack.tiles[num].isOccupied) {
 
-				// Select random letter
+				// Select random letter from legal letters set
 				do {
 					randomCharacter = alphabet[Math.floor(Math.random() * alphabet.length)];
 				} while (this.state.tileData[randomCharacter].quantity <= 0);
@@ -50,57 +56,77 @@ class Scrabble {
 				let url = this.state.tileData[randomCharacter].url;
 				targetSpace.append(`<img class="tile draggable ${randomCharacter}" src="${url}"></img>`);
 			}	
+			// Attach eventListeners for drag and drop to new tiles
 			let target = targetSpace[0].children[0];
 			this.draggifyTile(this, target);	
 		}
 	};
 
+	// Resets the whole game to initialized state
 	reset() {
+
+		// Set rack spaces to unoccupied
 		for (let num = 0; num < RACK_SIZE; num++) {
 			this.rack.tiles[num].isOccupied = false;
 		}
+
+		// Remove current set of visible tiles
 		$('img').remove();
 		this.firstTilePlaced = false;
+
+		// Refill Rack and reinitialize the Scrabble game
 		this.fillRack();
 		this.initialize();
 	}
 
+	// Drag and Drop click events are situated in here
 	draggifyTile(scrabble, target) {
 
 		// in the case of a drop over non-droppable elements
 		let parent = target.parentElement;
 		let letter = target.classList[2];
 
+		// The outermost event
 		target.onmousedown = (e) => {
 
+			// Correct for grabbing in non-center locations (no skip)
 			let shiftX = e.clientX - target.getBoundingClientRect().left;
 			let shiftY = e.clientY - target.getBoundingClientRect().top;
 			target.style.position = 'absolute';
 			target.style.zIndex = 1000;
 
+			// Append to body to move about the page
 			document.body.append(target);
 			
+			// Moves the dragged object to specified location on page
 			function moveAt(pageX, pageY) {
 				target.style.left = pageX - shiftX + 'px';
 				target.style.top = pageY - shiftY + 'px';
 			}
 			moveAt(e.pageX, e.pageY);
 
+			// Nested event for mouse movement after click has occurred
 			function onMouseMove(e) {
 				moveAt(e.pageX, e.pageY);
 
+				// Need to hide the target to become aware of the element below
 				target.hidden = true;
 				let elemBelow = document.elementFromPoint(e.clientX, e.clientY);
 				target.hidden = false;
 
+				// The drop event
 				target.onmouseup = () => {
+
 					let droppableTarget = false;
+
+					// Determine if the element underneath the dropped target is able to be dropped on
 					elemBelow.classList.forEach((className) => {
 						if (className == 'droppable') {
 							droppableTarget = true;
 						}
 					});
 
+					// removes offset once dropped
 					target.getAttribute('style');
 					target.removeAttribute('style');
 
@@ -113,8 +139,10 @@ class Scrabble {
 						squareNumber = 10 + +elemBelow.id[7];
 					}
 
+					// Cases for when the element is droppable
 					if (droppableTarget) {
 
+						// If the tile is not the first tile to be played
 						if (Scrabble.firstTilePlaced) {
 
 							let prevSquare = squareNumber - 1;
@@ -127,6 +155,8 @@ class Scrabble {
 								scrabble.addTileToBoard(squareNumber, letter);
 							}
 							else {
+
+								// Else return to tile to its place on the rack
 								parent.appendChild(target);
 							}
 						}
@@ -137,12 +167,16 @@ class Scrabble {
 							Scrabble.firstTilePlaced = true;
 						}
 					}
+					// The element dropped onto is not capable of receiving dropped tile
 					else {
+						// Attempt to store the location of the board square the tile was on
 						let rackSpace = parent;
 						parent = target.parentElement;
-						console.log(parent);
-					
+						
+						// Return tile to its place on the rack
 						rackSpace.appendChild(target);
+
+						// !!!!! Attempt to remove tile information, but target.parentElement keeps returning body !!!!!
 						scrabble.removeTileFromBoard(parent);
 					}
 					scrabble.checkForEmptyBoard();
@@ -161,17 +195,20 @@ class Scrabble {
 		}
 	}
 
+	// Tile information for added tile is stored in Board object
 	addTileToBoard(spaceNumber, letter) {
 		let value = this.state.tileData[letter].value;
 		this.board.squares[spaceNumber].content = {letter, value};
 		this.board.squares[spaceNumber].isOccupied = true;
 	}
 
+	// Tile information for removed tile is removed from Board object
 	removeTileFromBoard(parent) {
 		this.board.squares[parent].content = null;
 		this.board.squares[parent].isOccupied = false;
 	}
 
+	// Checks each square for tile
 	checkForEmptyBoard() {
 		let isEmpty = true;
 		this.board.squares.forEach((square) => {
@@ -184,41 +221,51 @@ class Scrabble {
 		}
 	}
 
-	///////////////////UNFINISHED UNTESTED WOORK ONNIT
+	// For each square on the board, a weighted sum of 
+	// bonuses and tile values is computed and updated on the page
 	updateScore() {
 
 		let squares = this.board.squares;
 		let sum = 0, letterMultiplier = 1, wordMultiplier = 1;
-		console.log(squares)
+
 		for(let num = 0; num < BOARD_LENGTH; num++) {
+
+			// Only where a tile is located
 			if (squares[num].isOccupied) {
+
+				// Check squares multiplier attribute against the following symbols
 				switch (squares[num].multiplier) {
 
+					// No multiplier
 					case 'blank':
 						break;
 	
+					// Double Letter Score
 					case 'dls':
 						letterMultiplier = 2;
 						break;
 					
+					// Double Word Score
 					case 'dws':
 						wordMultiplier *= 2;
 						break;
 					
+					// Invalid multiplier symbol
 					default:
 						console.log('INVALID SQUARE MULTIPLIER VALUE');
 						exit(-1);
 				}
 				sum += squares[num].content['value'] * letterMultiplier;
-				
 			}
 		}
-		
 		this.score = sum * wordMultiplier;
+
+		// Add the score to the page
 		$('#score').text(this.score);
 	};
 }
 
+// Contains all board logic
 class Board {
 	constructor(none) {
 		// 15 total squares on board strip
@@ -274,12 +321,13 @@ class Board {
 	}
 }
 
+// Square logic stored here
 class Square {
 	constructor(id, mult) {
 		this.id = id;
 		this.isOccupied = false;
 		this.multiplier = mult;
-		this.content = {};	// IMPLEMENT HOLDER FOR TILE
+		this.content = {};	
 	}
 }
 
@@ -290,6 +338,7 @@ class Tile {
 	}
 }
 
+// Rack logic stored here
 class Rack {
 	constructor(none) {
 		this.tiles = new Array();
@@ -298,7 +347,11 @@ class Rack {
 	};
 
 	initialize() {
+
+		// Grab div to fill with rack spaces
 		let space = $('#space');
+
+		// Create 7 rack space instances that are droppable and initialize them
 		for (let num = 0; num < RACK_SIZE; num++) {
 			space.append(`<div id="space${num}" class="tile-space droppable"></div>`);
 			let spaceID = `space${num}`;
@@ -310,6 +363,7 @@ class Rack {
 	}
 }
 
+// Information about the game is stored here
 class State {
 	constructor(none) {
 
@@ -354,7 +408,6 @@ class State {
 function main() {
 	// Create new Scrabble object
 	let game = new Scrabble();
-	// game.displayGameState('board');
 }
 
 main();
