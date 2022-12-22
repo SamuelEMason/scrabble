@@ -11,6 +11,7 @@ class Scrabble {
 		this.board = new Board();
 		this.rack = new Rack();
 		this.state = new State();
+		this.tileID = 0;
 		this.firstTilePlaced = false;
 		this.initialize();
 	};
@@ -54,7 +55,7 @@ class Scrabble {
 				// Create new tile
 				this.rack.tiles[num].isOccupied = true;
 				let url = this.state.tileData[randomCharacter].url;
-				targetSpace.append(`<img class="tile draggable ${randomCharacter}" src="${url}"></img>`);
+				targetSpace.append(`<img id="${this.tileID++}" class="tile draggable ${randomCharacter}" src="${url}"></img>`);
 			}	
 			// Attach eventListeners for drag and drop to new tiles
 			let target = targetSpace[0].children[0];
@@ -117,6 +118,7 @@ class Scrabble {
 				// The drop event
 				target.onmouseup = () => {
 
+
 					let droppableTarget = false;
 
 					// Determine if the element underneath the dropped target is able to be dropped on
@@ -130,63 +132,63 @@ class Scrabble {
 					target.getAttribute('style');
 					target.removeAttribute('style');
 
-					let squareNumber;
-					// Check if square id is less than 10
-					if (elemBelow.id.length == 7) {
-						squareNumber = +elemBelow.id[6];
-					}
-					else {
-						squareNumber = 10 + +elemBelow.id[7];
-					}
+					let squareNumber = elemBelow.id.replace('square', '');
+					
+					console.log(target.id);
 
 					// Cases for when the element is droppable
 					if (droppableTarget) {
 
 						// If the tile is not the first tile to be played
-						if (Scrabble.firstTilePlaced) {
-
+						if (scrabble.firstTilePlaced) {
 							let prevSquare = squareNumber - 1;
 
 							// If the previous square is occupied with a tile
 							if ($(`#square${prevSquare}`).children()[0]) {
 
 								// Add the new tile to the current square
-								$(elemBelow)[0].appendChild(target);
+								scrabble.board.currentTileLocation[target.id] = squareNumber;
 								scrabble.addTileToBoard(squareNumber, letter);
+								$(elemBelow)[0].appendChild(target);
+								
 							}
 							else {
-
+								scrabble.checkForEmptyBoard()
 								// Else return to tile to its place on the rack
+								// let squareNumber = scrabble.board.currentTileLocation[target.id];
+								// scrabble.removeTileFromBoard(squareNumber);
+								// delete scrabble.board.currentTileLocation[target.id];
 								parent.appendChild(target);
 							}
 						}
-
 						else {
+							if (elemBelow.classList[0] == 'place') {
+								scrabble.board.currentTileLocation[target.id] = squareNumber;
+								scrabble.addTileToBoard(squareNumber, letter);
+							}
 							$(elemBelow)[0].appendChild(target);
-							scrabble.addTileToBoard(squareNumber, letter);
-							Scrabble.firstTilePlaced = true;
+							
 						}
 					}
 					// The element dropped onto is not capable of receiving dropped tile
 					else {
-						// Attempt to store the location of the board square the tile was on
-						let rackSpace = parent;
-						parent = target.parentElement;
-						
+
+						// If the tile was picked up from the board, remove from board
+						if (scrabble.board.currentTileLocation[target.id]) {
+							let squareNumber = scrabble.board.currentTileLocation[target.id];
+							scrabble.removeTileFromBoard(squareNumber);
+							delete scrabble.board.currentTileLocation[target.id];
+						}
 						// Return tile to its place on the rack
-						rackSpace.appendChild(target);
-
-						// !!!!! Attempt to remove tile information, but target.parentElement keeps returning body !!!!!
-						scrabble.removeTileFromBoard(parent);
+						parent.appendChild(target);
 					}
-					scrabble.checkForEmptyBoard();
-
+					
 					document.removeEventListener('mousemove', onMouseMove);
 					target.onmouseup = null;
+					scrabble.updateScore();
 				}
 			}
-			scrabble.updateScore();
-
+	
 			document.addEventListener('mousemove', onMouseMove);
 
 			target.ondragstart = () => {
@@ -200,12 +202,15 @@ class Scrabble {
 		let value = this.state.tileData[letter].value;
 		this.board.squares[spaceNumber].content = {letter, value};
 		this.board.squares[spaceNumber].isOccupied = true;
+		this.firstTilePlaced = true;
 	}
 
 	// Tile information for removed tile is removed from Board object
 	removeTileFromBoard(parent) {
+		console.log('removing tile from', parent);
 		this.board.squares[parent].content = null;
 		this.board.squares[parent].isOccupied = false;
+		this.checkForEmptyBoard();
 	}
 
 	// Checks each square for tile
@@ -216,6 +221,8 @@ class Scrabble {
 				isEmpty = false;
 			}
 		});
+
+		console.log(this.board);
 		if (isEmpty) {
 			this.firstTilePlaced = false;
 		}
@@ -270,6 +277,7 @@ class Board {
 	constructor(none) {
 		// 15 total squares on board strip
 		this.squares = new Array();
+		this.currentTileLocation = new Object();
 		this.multipliers = {
 			2: 'dws',
 			6: 'dls',
@@ -312,12 +320,12 @@ class Board {
 
 	addTile(squareNum) {
 		let index = squareNum - 1;
-		this.tiles[index].isOccupied = true;
+		this.squares[index].isOccupied = true;
 	}
 
 	removeTile(squareNum) {
 		let index = squareNum - 1;
-		this.tiles[index].isOccupied = false;
+		this.squares[index].isOccupied = false;
 	}
 }
 
@@ -389,7 +397,7 @@ class State {
 			'n': {'value': 1, 'quantity': 6, 'url': `images/Scrabble_Tiles/Scrabble_Tile_N.jpg`},
 			'o': {'value': 1, 'quantity': 8, 'url': `images/Scrabble_Tiles/Scrabble_Tile_O.jpg`},
 			'p': {'value': 3, 'quantity': 2, 'url': `images/Scrabble_Tiles/Scrabble_Tile_P.jpg`},
-			'q': {'value': 10,'quantity':  1,'url':  `images/Scrabble_Tiles/Scrabble_Tile_Q.jpg`},
+			'q': {'value': 10,'quantity': 1,'url':  `images/Scrabble_Tiles/Scrabble_Tile_Q.jpg`},
 			'r': {'value': 1, 'quantity': 6, 'url': `images/Scrabble_Tiles/Scrabble_Tile_R.jpg`},
 			's': {'value': 1, 'quantity': 4, 'url': `images/Scrabble_Tiles/Scrabble_Tile_S.jpg`},
 			't': {'value': 1, 'quantity': 6, 'url': `images/Scrabble_Tiles/Scrabble_Tile_T.jpg`},
@@ -398,7 +406,7 @@ class State {
 			'w': {'value': 4, 'quantity': 2, 'url': `images/Scrabble_Tiles/Scrabble_Tile_W.jpg`},
 			'x': {'value': 8, 'quantity': 1, 'url': `images/Scrabble_Tiles/Scrabble_Tile_X.jpg`},
 			'y': {'value': 4, 'quantity': 2, 'url': `images/Scrabble_Tiles/Scrabble_Tile_Y.jpg`},
-			'z': {'value': 10,'quantity':  1,'url':  `images/Scrabble_Tiles/Scrabble_Tile_Z.jpg`},
+			'z': {'value': 10,'quantity': 1,'url':  `images/Scrabble_Tiles/Scrabble_Tile_Z.jpg`},
 			'_': {'value': 0, 'quantity': 2, 'url': `images/Scrabble_Tiles/Scrabble_Tile_Blank.jpg`}
 		};
 	};
