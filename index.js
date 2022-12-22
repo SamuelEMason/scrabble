@@ -11,6 +11,7 @@ class Scrabble {
 		this.board = new Board();
 		this.rack = new Rack();
 		this.state = new State();
+		this.tileSet = 	"aaaaaaaaabbccddddeeeeeeeeeeeeffggghhiiiiiiiiijkllllmmnnnnnnooooooooppqrrrrrrssssttttttuuuuvvwwxyyz__";
 		this.tileID = 0;
 		this.firstTilePlaced = false;
 		this.initialize();
@@ -35,33 +36,33 @@ class Scrabble {
 	// Fill the Rack with the proper amount of tiles
 	fillRack(none) {
 
-		// Set of legal letters
-		const alphabet = "abcdefghijklmnopqrstuvwxyz_";
-		let randomCharacter;
-
-		for (let num = 0; num < RACK_SIZE; num++) {
+		for (let rackSpace = 0; rackSpace < RACK_SIZE; rackSpace++) {
 
 			// Select space in rack
-			let targetSpace = $(`#space${num}`);
+			let targetSpace = $(`#space${rackSpace}`);
 
 			// Skip if space is occupied
-			if (!this.rack.tiles[num].isOccupied) {
-
-				// Select random letter from legal letters set
-				do {
-					randomCharacter = alphabet[Math.floor(Math.random() * alphabet.length)];
-				} while (this.state.tileData[randomCharacter].quantity <= 0);
-				
-				// Create new tile
-				this.rack.tiles[num].isOccupied = true;
-				let url = this.state.tileData[randomCharacter].url;
-				targetSpace.append(`<img id="${this.tileID++}" class="tile draggable ${randomCharacter}" src="${url}"></img>`);
+			if (!this.rack.tiles[rackSpace].isOccupied) {
+				let newTile = this.generateTile(rackSpace);
+				targetSpace.append(newTile);
 			}	
 			// Attach eventListeners for drag and drop to new tiles
 			let target = targetSpace[0].children[0];
 			this.draggifyTile(this, target);	
 		}
 	};
+
+	generateTile(rackSpace) {
+		// Select random letter from legal letters set
+		let randomCharacter = this.tileSet[Math.floor(Math.random() * this.tileSet.length)];
+		this.tileSet = this.tileSet.replace(randomCharacter, '');
+		this.state.tileData[randomCharacter].quantity -= 1;
+
+		// Create new tile
+		this.rack.tiles[rackSpace].isOccupied = true;
+		let url = this.state.tileData[randomCharacter].url;
+		return `<img id="${this.tileID++}" class="tile draggable ${randomCharacter}" src="${url}"></img>`;
+	}
 
 	// Resets the whole game to initialized state
 	reset() {
@@ -99,6 +100,11 @@ class Scrabble {
 			// Append to body to move about the page
 			document.body.append(target);
 			
+			if (scrabble.board.currentTileLocation[target.id]) {
+				let squareNumber = scrabble.board.currentTileLocation[target.id];
+				scrabble.removeTileFromBoard(squareNumber);
+			}
+
 			// Moves the dragged object to specified location on page
 			function moveAt(pageX, pageY) {
 				target.style.left = pageX - shiftX + 'px';
@@ -133,8 +139,6 @@ class Scrabble {
 					target.removeAttribute('style');
 
 					let squareNumber = elemBelow.id.replace('square', '');
-					
-					console.log(target.id);
 
 					// Cases for when the element is droppable
 					if (droppableTarget) {
@@ -146,28 +150,30 @@ class Scrabble {
 							// If the previous square is occupied with a tile
 							if ($(`#square${prevSquare}`).children()[0]) {
 
-								// Add the new tile to the current square
-								scrabble.board.currentTileLocation[target.id] = squareNumber;
-								scrabble.addTileToBoard(squareNumber, letter);
-								$(elemBelow)[0].appendChild(target);
-								
+								// If square being dropped on is already occupied
+								if ($(`#square${squareNumber}`).children()[0]) {
+									parent.appendChild(target);
+								}
+								else {
+									// Add the new tile to the current square
+									scrabble.board.currentTileLocation[target.id] = squareNumber;
+									squareNumber = scrabble.board.currentTileLocation[target.id];
+									scrabble.addTileToBoard(squareNumber, letter);
+									$(elemBelow)[0].appendChild(target);
+								}
 							}
 							else {
-								scrabble.checkForEmptyBoard()
-								// Else return to tile to its place on the rack
-								// let squareNumber = scrabble.board.currentTileLocation[target.id];
-								// scrabble.removeTileFromBoard(squareNumber);
-								// delete scrabble.board.currentTileLocation[target.id];
+								scrabble.checkForEmptyBoard();
 								parent.appendChild(target);
 							}
 						}
 						else {
 							if (elemBelow.classList[0] == 'place') {
 								scrabble.board.currentTileLocation[target.id] = squareNumber;
+								squareNumber = scrabble.board.currentTileLocation[target.id];
 								scrabble.addTileToBoard(squareNumber, letter);
 							}
 							$(elemBelow)[0].appendChild(target);
-							
 						}
 					}
 					// The element dropped onto is not capable of receiving dropped tile
@@ -206,15 +212,15 @@ class Scrabble {
 	}
 
 	// Tile information for removed tile is removed from Board object
-	removeTileFromBoard(parent) {
-		console.log('removing tile from', parent);
-		this.board.squares[parent].content = null;
-		this.board.squares[parent].isOccupied = false;
+	removeTileFromBoard(spaceNumber) {
+		this.board.squares[spaceNumber].content = null;
+		this.board.squares[spaceNumber].isOccupied = false;
 		this.checkForEmptyBoard();
 	}
 
 	// Checks each square for tile
 	checkForEmptyBoard() {
+
 		let isEmpty = true;
 		this.board.squares.forEach((square) => {
 			if (square.isOccupied) {
@@ -222,7 +228,6 @@ class Scrabble {
 			}
 		});
 
-		console.log(this.board);
 		if (isEmpty) {
 			this.firstTilePlaced = false;
 		}
@@ -237,6 +242,8 @@ class Scrabble {
 
 		for(let num = 0; num < BOARD_LENGTH; num++) {
 
+			letterMultiplier = 1;
+			
 			// Only where a tile is located
 			if (squares[num].isOccupied) {
 
@@ -263,6 +270,7 @@ class Scrabble {
 						exit(-1);
 				}
 				sum += squares[num].content['value'] * letterMultiplier;
+				letterMultiplier = 1;
 			}
 		}
 		this.score = sum * wordMultiplier;
