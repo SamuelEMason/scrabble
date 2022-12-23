@@ -8,13 +8,14 @@ body {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	width: auto;
 }
 
 
 
 main {
 	background-color: rgba(191, 90, 90, 0.774);
-	width: 100%;
+	width: 90%;
 	height: 520px;
 	display: flex;
 	flex-direction: column;
@@ -23,7 +24,7 @@ main {
 }
 
 #state {
-	background-color: rgba(123, 167, 205, 0.571);
+	background-color: rgba(123, 167, 205, 0.329);
 	width: 600px;
 	height: fit-content;
 	margin-bottom: 75px;
@@ -37,6 +38,7 @@ main {
 #score-replace {
 	display: flex;
 	align-items: center;
+	padding: 7px 0;
 }
 
 #score-wrapper {
@@ -44,8 +46,8 @@ main {
 	display: flex;
 	text-align: center;
 	width: 100%;
-	height: 120px;
-	border: 1px solid black;
+	height: 80px;
+	border: 1px solid rgba(0, 0, 0, 0.24);
 	text-align: center;
 	justify-content: center;
 	align-items: center;
@@ -53,9 +55,9 @@ main {
 
 #replace {
 	display: flex;
-	border: 1px solid yellow;
+	border: 1px solid rgba(0, 0, 0, 0.263);
 	width: 100%;
-	height: 120px;
+	height: 80px;
 	text-align: center;
 	justify-content: center;
 	align-items: center;
@@ -67,7 +69,7 @@ main {
 	align-items: center;
 	justify-content: center;
 	padding: 15px;
-	border: 1px solid black;
+	padding-top: 20px;
 }
 
 #options button {
@@ -87,7 +89,7 @@ main {
 }
 
 #tile-data th, td {
-	border: 2px ridge rgba(1, 178, 237, 0.406);
+	border: 2px ridge rgba(1, 178, 237, 0.267);
 	padding: 2px;
 }
 

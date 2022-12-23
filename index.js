@@ -6,6 +6,7 @@ var RACK_SIZE = 7;
 var NUM_MULTIPLIERS = 4;
 
 
+// This class represents the entire Scrabble game
 class Scrabble {
 	constructor() {
 		this.board = new Board();
@@ -36,6 +37,7 @@ class Scrabble {
 			// Skip if space is occupied
 			if (!$(`#space${rackSpace}`).children().length) {
 
+				// Generate new tile and append to the current rack space
 				let newTile = this.generateTile(rackSpace);
 				targetSpace.append(newTile);
 
@@ -46,41 +48,54 @@ class Scrabble {
 		}
 	};
 
+	// Generates an individual tile
+	// Takes as input the rack space for the new tile to reside
+	// Returns the string of an <img> tag with new tile's information
 	generateTile(rackSpace) {
 
 		// Select random letter from legal letters set
 		let randomCharacter = this.tileSet[Math.floor(Math.random() * this.tileSet.length)];
+		
+		// Remove one instance of this character from the tileSet
 		this.tileSet = this.tileSet.replace(randomCharacter, '');
+
+		// Decrement the quantity remaining of this character from tileData
 		this.state.tileData[randomCharacter].quantity -= 1;
 
-		// Create new tile
+		// Show this rack space is now occupied
 		this.rack.tiles[rackSpace].isOccupied = true;
+
+		// Create new tile HTML string
 		let url = this.state.tileData[randomCharacter].url;
 		return `<img id="${this.tileID++}" class="tile draggable ${randomCharacter}" src="${url}"></img>`;
 	}
 
-	// Drag and Drop click events are situated in here
+	// Drag and Drop click events are bound to tiles with this function
 	draggifyTile(scrabble, target) {
 
 		// in the case of a drop over non-droppable elements
 		let parent = target.parentElement;
-		// let letter = target.classList[2];
+		let letter = target.classList[2];
 
-
-		// The outermost event
+		// When mousedown event occurs
 		target.onmousedown = (e) => {
 
-			// Correct for grabbing in non-center locations (no skip)
+			// Correction for dragging by non-centered element (prevents skipping to center)
 			let shiftX = e.clientX - target.getBoundingClientRect().left;
 			let shiftY = e.clientY - target.getBoundingClientRect().top;
+
+			// Prep for drag and drop
 			target.style.position = 'absolute';
 			target.style.zIndex = 1000;
 
 			// Append to body to move about the page
 			document.body.append(target);
 			
+			// Removes tile on mousedown. 
+			// This allows the first single letter to be placed to be moved to a new square.
 			if (scrabble.board.currentTileLocation[target.id]) {
 				let squareNumber = scrabble.board.currentTileLocation[target.id];
+				delete scrabble.board.currentTileLocation[target.id];
 				scrabble.removeTileFromBoard(squareNumber);
 			}
 
@@ -112,28 +127,37 @@ class Scrabble {
 						}
 					});
 
-					// removes offset once dropped
+					// Removes offset once dropped
 					target.getAttribute('style');
 					target.removeAttribute('style');
 
+					// Gets the number of the board square the tile is placed onto
 					let squareNumber = elemBelow.id.replace('square', '');
-
-					// Cases for when the element is droppable
+					
+					// Cases for when the dropped on element is droppable
 					if (droppableTarget) {
 
+						// If tile is dropped into the replace tile section
 						if (elemBelow.id == 'replace') {
 							
-							let letter = target.classList[2];
+							// Remove the <img> tag of the tile
 							$(target).remove();
+
+							// Add the character back into the tileSet
 							scrabble.tileSet += letter;
+
+							// Increment the quantity of the character in tileData
 							scrabble.state.tileData[letter].quantity += 1;
 							
-							
+							// Get the number of the rack space that was left empty
 							let rackSpace = parent.id.replace('space', '');
+
+							// Generate a new tile and append to the rack space
 							let newTile = scrabble.generateTile(rackSpace).replace('</img>', '');
 							$(parent).append(newTile);
 							target = parent.children[0];
 							
+							// Make new tile draggable and update tile data table
 							scrabble.draggifyTile(scrabble, target);
 							scrabble.updateTileDataTable();
 						}
@@ -156,13 +180,19 @@ class Scrabble {
 									$(elemBelow)[0].appendChild(target);
 								}
 							}
+							// If the tile is dropped to the left of the first tile or after a gap
 							else {
+								// Reposition tile back on rack
 								scrabble.checkForEmptyBoard();
 								parent.appendChild(target);
 							}
-						}
+						}	
+						// If tile is the first tile to be placed on the board
 						else {
+							// If the board is the droppable element
 							if (elemBelow.classList[0] == 'place') {
+
+								// Place the tile on the board
 								scrabble.board.currentTileLocation[target.id] = squareNumber;
 								squareNumber = scrabble.board.currentTileLocation[target.id];
 								scrabble.addTileToBoard(squareNumber, letter);
@@ -181,7 +211,6 @@ class Scrabble {
 						// Return tile to its place on the rack
 						parent.appendChild(target);
 					}
-					
 					document.removeEventListener('mousemove', onMouseMove);
 					target.onmouseup = null;
 				}
@@ -225,18 +254,27 @@ class Scrabble {
 		}
 	}
 
-	// 
+	// Refreshes the state and displays the tileData as a table
 	updateTileDataTable() {
 
+		// Set of all allowed symbols
 		let alphabet = 'abcdefghijklmnopqrstuvwxyz_';
 
+		// Clear the table before rendering
 		$('#tile-data').empty();
+
+		// Here the table is dynamically generated with a header and 7 rows
+		// Hable header added
 		$('#tile-data').append('<thead id="td-head"></thead>');
+
+		// Table body generated
 		$('#tile-data').append('<tbody id="td-body"></tbody>');
 
+		// Actual header string added to table header
 		$('#td-head').append('<tr><th colspan=8>Remaining Tile Count</th></tr>')
 		
-				
+		// In this loop, every iteration creates one row with 8 columns.
+		// The columns alternate by showing a letter and how many are remaining in the game.
 		for (let i = 0, row = 0; i < 24; i += 4) {
 
 			$('#td-body').append(`
@@ -266,8 +304,9 @@ class Scrabble {
 						${this.state.tileData[alphabet[i + 3]].quantity}
 					</td>
 			`);
-			
 		}
+		// Since there are 27 symbols allowed, these three were left over from the for loop.
+		// This does the same as the contents of the for loop for a row of 6 remaining columns.
 		$('#td-body').append(`
 			<tr>
 				<td>
@@ -297,9 +336,11 @@ class Scrabble {
 	// bonuses and tile values is computed and updated on the page
 	updateScore() {
 
+		// Get the board's squares
 		let squares = this.board.squares;
 		let sum = 0, letterMultiplier = 1, wordMultiplier = 1;
 
+		// In this loop, the weighted sum for an individual round is computed
 		for(let num = 0; num < BOARD_LENGTH; num++) {
 
 			letterMultiplier = 1;
@@ -333,10 +374,12 @@ class Scrabble {
 				letterMultiplier = 1;
 			}
 		}
+		// Current round's score is added to the total score and displayed on the page
 		this.state.score += sum * wordMultiplier;
 		$('#score').text(this.state.score);
 	};
 
+	// Resets the game's score to zero and updates the score on the page
 	resetScore(none) {
 		// Add the score to the page
 		this.state.score = 0;
@@ -373,20 +416,29 @@ class Scrabble {
 		this.updateTileDataTable();
 	}
 
+	// This is the logic for the submit button click event
 	submit() {
+		// Updates the score of the game
 		this.updateScore();
+
+		// Here it deletes each tile from the board
 		for (let num = 0; num < BOARD_LENGTH; num++) {
 			if ($(`#square${num}`).children()) {
 				$(`#square${num}`).children().remove();
+
+				// Sets the square to unoccupied
 				this.board.squares[num].isOccupied = false;
 			}
 		}
+		// Refills the empty rack spaces
 		this.fillRack();
+
+		// New round begins with first tile not yet placed
 		this.firstTilePlaced = false;
 		this.updateTileDataTable();
-		
 	}
 
+	// The reset and submit buttons are set 
 	loadButtonEvents() {
 		$('#reset').click((e) => {
 			this.reset();
@@ -544,10 +596,8 @@ class State {
 
 
 function main() {
-	// Create new Scrabble object
-	let game = new Scrabble();
-
-	
+	// Begin the game
+	let game = new Scrabble();	
 }
 
 main();

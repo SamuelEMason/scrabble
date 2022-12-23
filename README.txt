@@ -3,16 +3,9 @@ Samuel_Mason@student.uml.edu
 GitHub Page: https://samuelemason.github.io/scrabble/
 GitHub Repo: https://github.com/SamuelEMason/scrabble
 
-So for the past 4 days I've been sick with a fever and a sore throat. All I could do until today
-was lay there in bed trying to rest. I don't want to be a person who makes excuses in life,
-but I feel like it's necessary to state this. Because I had other finals I had to stop working
-on this assignment until I had finished the exams as I would have 4 days after them to finish it.
-I must've gotten sick because I'm run down from the semester but the timing made it so that I didn't
-have enough time to finish this by the deadline.
-
-I emailed the professor to see if I could get an extension because of my circumstances and received no 
-response. If there's anything at all I can do to continue with this assignment with an extension please
-let me know, I would really appreciate the help. Thank you.
+I want to start by stating how much I appreciate you giving me this extension. I was having a very difficult time
+trying to accept that I would get a bad grade in this class because I got sick and now I've completed the assignment
+and feel proud of my accomplishment. Thank you so much!!!
 
 About the implementation:
 
@@ -39,12 +32,18 @@ The Board contains 15 Space objects related to the divs that are placeholders fo
 
 The State is where the information about the tiles is located as well as the score.
 
-On the page, you can see the score changing, the click after a piece is used. Most of the buttons underneath
-don't work properly yet, I've been stuck on certain drag and drop bugs that have been difficult for me to rectify.
-The reset button works the first time but afterwards, the pieces cannot be dropped into the spaces on the board.
+All of the assigned features are implemented as well as a replace tile square. With this square, you drag
+the tile you want to replace and drop it into the square. The tile is replaced on the rack with a new tile.
+The replaced tile is put "back into the bag" by way of incrementing the number of tiles with that letter.
 
-Overall, a lot has gone into planning and structuring this program, but I have run out of time because I was sick.
+This whole process has given me a lot better understanding in the area of drag and drop events. This 
+was a lot to wrap my head around and still is very complicated.
 
+The only issue I still get is if you repeatedly click the reset button, eventually the console goes into 
+an infinite loop and eventually the browser can't function anymore. So be careful!
+
+I've enjoyed working on this assignment and this class in general!
+Thanks for a great semester!
 
 Here is my work cited:
 https://javascript.info/mouse-drag-and-drop
