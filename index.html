@@ -17,12 +17,14 @@
 
 	<main>
 		<div id="state">
-			<h3>Score: <span id="score"></span></h3>
-			<table id="tileRem"></table>
+			<div id="score-replace">
+				<h3 id="score-wrapper">Score: <span id="score"></span></h3>
+				<div id="replace" class="droppable">Drag Tile <br> Here to Replace</div>
+			</div>
+			<table id="tile-data"></table>
 			<div id="options">
-				<button id="swap">Swap Tiles</button>
 				<button id="submit">Submit</button>
-				<button id="reset">reset</button>
+				<button id="reset">Reset Game</button>
 			</div>
 		</div>
 		<div id="board"></div>

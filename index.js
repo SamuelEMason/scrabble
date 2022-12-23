@@ -18,19 +18,11 @@ class Scrabble {
 	};
 
 	initialize() {
-
 		this.fillRack();
 		this.updateScore();
-
-		$('#reset').click((e) => {
-			this.reset();
-			this.fillRack();
-		});
-
-		// $('#submit').click((e) => {
-		// 	this.updateScore();
-		// 	this.reset();
-		// });
+		this.updateTileDataTable();
+		this.loadButtonEvents();
+		
 	}
 
 	// Fill the Rack with the proper amount of tiles
@@ -42,17 +34,20 @@ class Scrabble {
 			let targetSpace = $(`#space${rackSpace}`);
 
 			// Skip if space is occupied
-			if (!this.rack.tiles[rackSpace].isOccupied) {
+			if (!$(`#space${rackSpace}`).children().length) {
+
 				let newTile = this.generateTile(rackSpace);
 				targetSpace.append(newTile);
+
+				// Attach drag and drop event handlers to new tiles
+				let target = targetSpace[0].children[0];
+				this.draggifyTile(this, target);
 			}	
-			// Attach eventListeners for drag and drop to new tiles
-			let target = targetSpace[0].children[0];
-			this.draggifyTile(this, target);	
 		}
 	};
 
 	generateTile(rackSpace) {
+
 		// Select random letter from legal letters set
 		let randomCharacter = this.tileSet[Math.floor(Math.random() * this.tileSet.length)];
 		this.tileSet = this.tileSet.replace(randomCharacter, '');
@@ -64,29 +59,13 @@ class Scrabble {
 		return `<img id="${this.tileID++}" class="tile draggable ${randomCharacter}" src="${url}"></img>`;
 	}
 
-	// Resets the whole game to initialized state
-	reset() {
-
-		// Set rack spaces to unoccupied
-		for (let num = 0; num < RACK_SIZE; num++) {
-			this.rack.tiles[num].isOccupied = false;
-		}
-
-		// Remove current set of visible tiles
-		$('img').remove();
-		this.firstTilePlaced = false;
-
-		// Refill Rack and reinitialize the Scrabble game
-		this.fillRack();
-		this.initialize();
-	}
-
 	// Drag and Drop click events are situated in here
 	draggifyTile(scrabble, target) {
 
 		// in the case of a drop over non-droppable elements
 		let parent = target.parentElement;
-		let letter = target.classList[2];
+		// let letter = target.classList[2];
+
 
 		// The outermost event
 		target.onmousedown = (e) => {
@@ -124,7 +103,6 @@ class Scrabble {
 				// The drop event
 				target.onmouseup = () => {
 
-
 					let droppableTarget = false;
 
 					// Determine if the element underneath the dropped target is able to be dropped on
@@ -143,8 +121,24 @@ class Scrabble {
 					// Cases for when the element is droppable
 					if (droppableTarget) {
 
+						if (elemBelow.id == 'replace') {
+							
+							let letter = target.classList[2];
+							$(target).remove();
+							scrabble.tileSet += letter;
+							scrabble.state.tileData[letter].quantity += 1;
+							
+							
+							let rackSpace = parent.id.replace('space', '');
+							let newTile = scrabble.generateTile(rackSpace).replace('</img>', '');
+							$(parent).append(newTile);
+							target = parent.children[0];
+							
+							scrabble.draggifyTile(scrabble, target);
+							scrabble.updateTileDataTable();
+						}
 						// If the tile is not the first tile to be played
-						if (scrabble.firstTilePlaced) {
+						else if (scrabble.firstTilePlaced) {
 							let prevSquare = squareNumber - 1;
 
 							// If the previous square is occupied with a tile
@@ -178,7 +172,6 @@ class Scrabble {
 					}
 					// The element dropped onto is not capable of receiving dropped tile
 					else {
-
 						// If the tile was picked up from the board, remove from board
 						if (scrabble.board.currentTileLocation[target.id]) {
 							let squareNumber = scrabble.board.currentTileLocation[target.id];
@@ -191,7 +184,6 @@ class Scrabble {
 					
 					document.removeEventListener('mousemove', onMouseMove);
 					target.onmouseup = null;
-					scrabble.updateScore();
 				}
 			}
 	
@@ -231,6 +223,74 @@ class Scrabble {
 		if (isEmpty) {
 			this.firstTilePlaced = false;
 		}
+	}
+
+	// 
+	updateTileDataTable() {
+
+		let alphabet = 'abcdefghijklmnopqrstuvwxyz_';
+
+		$('#tile-data').empty();
+		$('#tile-data').append('<thead id="td-head"></thead>');
+		$('#tile-data').append('<tbody id="td-body"></tbody>');
+
+		$('#td-head').append('<tr><th colspan=8>Remaining Tile Count</th></tr>')
+		
+				
+		for (let i = 0, row = 0; i < 24; i += 4) {
+
+			$('#td-body').append(`
+				<tr>
+					<td>
+						${alphabet[i]}
+					</td>
+					<td>
+						${this.state.tileData[alphabet[i]].quantity}
+					</td>
+					<td>
+						${alphabet[i + 1]}
+					</td>
+					<td>
+						${this.state.tileData[alphabet[i + 1]].quantity}
+					</td>
+					<td>
+						${alphabet[i + 2]}
+					</td>
+					<td>
+						${this.state.tileData[alphabet[i + 2]].quantity}
+					</td>
+					<td>
+						${alphabet[i + 3]}
+					</td>
+					<td>
+						${this.state.tileData[alphabet[i + 3]].quantity}
+					</td>
+			`);
+			
+		}
+		$('#td-body').append(`
+			<tr>
+				<td>
+					${alphabet[24]}
+				</td>
+				<td>
+					${this.state.tileData[alphabet[24]].quantity}
+				</td>
+				<td>
+					${alphabet[25]}
+				</td>
+				<td>
+					${this.state.tileData[alphabet[25]].quantity}
+				</td>
+				<td>
+					${alphabet[26]}
+				</td>
+				<td>
+					${this.state.tileData[alphabet[26]].quantity}
+				</td>
+				<td></td><td></td>
+			</tr>
+		`);
 	}
 
 	// For each square on the board, a weighted sum of 
@@ -273,11 +333,69 @@ class Scrabble {
 				letterMultiplier = 1;
 			}
 		}
-		this.score = sum * wordMultiplier;
-
-		// Add the score to the page
-		$('#score').text(this.score);
+		this.state.score += sum * wordMultiplier;
+		$('#score').text(this.state.score);
 	};
+
+	resetScore(none) {
+		// Add the score to the page
+		this.state.score = 0;
+		$('#score').remove();
+		$('#score-wrapper').append('<span id="score"></span>');
+		$('#score').text(this.state.score);
+	}
+
+	// Resets the whole game to initialized state
+	reset() {
+		
+		// Set rack spaces to unoccupied
+		for (let num = 0; num < RACK_SIZE; num++) {
+			this.rack.tiles[num].isOccupied = false;
+		}
+
+		// Remove current set of visible tiles
+		$('img').remove();
+
+		// Initialize Scrabble tile data
+		this.tileSet = 	"aaaaaaaaabbccddddeeeeeeeeeeeeffggghhiiiiiiiiijkllllmmnnnnnnooooooooppqrrrrrrssssttttttuuuuvvwwxyyz__";
+		this.tileID = 0;
+		this.firstTilePlaced = false;
+		this.state.tileData = this.state.initializeTileData();
+
+		// Reinitialize the Scrabble game
+		this.initialize();
+
+		// Reset score
+		this.resetScore();
+
+		// Reset Tile Count table
+		$('#tile-data').empty();
+		this.updateTileDataTable();
+	}
+
+	submit() {
+		this.updateScore();
+		for (let num = 0; num < BOARD_LENGTH; num++) {
+			if ($(`#square${num}`).children()) {
+				$(`#square${num}`).children().remove();
+				this.board.squares[num].isOccupied = false;
+			}
+		}
+		this.fillRack();
+		this.firstTilePlaced = false;
+		this.updateTileDataTable();
+		
+	}
+
+	loadButtonEvents() {
+		$('#reset').click((e) => {
+			this.reset();
+		});
+	
+		$('#submit').click((e) => {
+			this.submit();
+		});
+	}
 }
 
 // Contains all board logic
@@ -388,12 +506,16 @@ class State {
 
 		// tileData object contains letter keys
 		// with 3 element sets containing tile value, quantity, and url
-		this.tileData = {
+		this.tileData = this.initializeTileData();
+	};
+
+	initializeTileData() {
+		return {
 			'a': {'value': 1, 'quantity': 9, 'url': `images/Scrabble_Tiles/Scrabble_Tile_A.jpg`},
 			'b': {'value': 3, 'quantity': 2, 'url': `images/Scrabble_Tiles/Scrabble_Tile_B.jpg`},
 			'c': {'value': 3, 'quantity': 2, 'url': `images/Scrabble_Tiles/Scrabble_Tile_C.jpg`},
 			'd': {'value': 2, 'quantity': 4, 'url': `images/Scrabble_Tiles/Scrabble_Tile_D.jpg`},
-			'e': {'value': 1, 'quantity': 1, 'url': `images/Scrabble_Tiles/Scrabble_Tile_E.jpg`},
+			'e': {'value': 1, 'quantity': 12, 'url': `images/Scrabble_Tiles/Scrabble_Tile_E.jpg`},
 			'f': {'value': 4, 'quantity': 2, 'url': `images/Scrabble_Tiles/Scrabble_Tile_F.jpg`},
 			'g': {'value': 2, 'quantity': 3, 'url': `images/Scrabble_Tiles/Scrabble_Tile_G.jpg`},
 			'h': {'value': 4, 'quantity': 2, 'url': `images/Scrabble_Tiles/Scrabble_Tile_H.jpg`},
@@ -416,7 +538,7 @@ class State {
 			'y': {'value': 4, 'quantity': 2, 'url': `images/Scrabble_Tiles/Scrabble_Tile_Y.jpg`},
 			'z': {'value': 10,'quantity': 1,'url':  `images/Scrabble_Tiles/Scrabble_Tile_Z.jpg`},
 			'_': {'value': 0, 'quantity': 2, 'url': `images/Scrabble_Tiles/Scrabble_Tile_Blank.jpg`}
-		};
+		}
 	};
 }
 
@@ -424,6 +546,8 @@ class State {
 function main() {
 	// Create new Scrabble object
 	let game = new Scrabble();
+
+	
 }
 
 main();

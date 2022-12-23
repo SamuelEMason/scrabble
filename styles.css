@@ -10,20 +10,22 @@ body {
 	align-items: center;
 }
 
+
+
 main {
 	background-color: rgba(191, 90, 90, 0.774);
-	width: 90%;
-	height: 400px;
+	width: 100%;
+	height: 520px;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	padding: 50px;	
+	padding: 30px;	
 }
 
 #state {
 	background-color: rgba(123, 167, 205, 0.571);
-	width: 40%;
-	height: 150px;
+	width: 600px;
+	height: fit-content;
 	margin-bottom: 75px;
 	display: grid;
 	grid-template-areas: 
@@ -32,16 +34,69 @@ main {
 	"buttons rem rem";
 }
 
+#score-replace {
+	display: flex;
+	align-items: center;
+}
+
+#score-wrapper {
+	grid-area: score;
+	display: flex;
+	text-align: center;
+	width: 100%;
+	height: 120px;
+	border: 1px solid black;
+	text-align: center;
+	justify-content: center;
+	align-items: center;
+}
+
+#replace {
+	display: flex;
+	border: 1px solid yellow;
+	width: 100%;
+	height: 120px;
+	text-align: center;
+	justify-content: center;
+	align-items: center;
+}
+
 #options {
 	grid-area: buttons;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 15px;
+	border: 1px solid black;
 }
 
-#score {
-	grid-area: score;
+#options button {
+	margin: 0 10px;
+	
 }
 
-#tilesRem {
+#tile-data {
 	grid-area: rem;
+	border: 2px ridge rgba(1, 178, 237, 0.406);
+	border-collapse: collapse;
+	text-align: center;
+}
+
+#tile-data th {
+	background-color: rgba(128, 91, 38, 0.158);
+}
+
+#tile-data th, td {
+	border: 2px ridge rgba(1, 178, 237, 0.406);
+	padding: 2px;
+}
+
+#tile-data td:nth-child(even) {
+	background-color: rgba(13, 126, 225, 0.336);
+}
+
+#tile-data td:nth-child(odd) {
+	background-color: rgba(134, 185, 230, 0.304);
 }
 
 #board {
@@ -188,7 +243,7 @@ main {
 	background-image: url('images/scrabble-tile-holder-406774_640.png');
 	background-repeat: no-repeat;
 	width: 640px;
-	height: 150px;
+	height: 90px;
 	margin-top: 50px;
 }
 
